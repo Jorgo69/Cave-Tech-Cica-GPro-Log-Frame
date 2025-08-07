@@ -1,29 +1,24 @@
 <?php
 
-
 namespace App\Livewire\VBeta\Project;
 
 use Livewire\Component;
 use App\Models\Project;
 use App\Models\ProjectContext;
 use App\Models\ProjectDocument;
-use App\Models\EnvironmentAnalysis;
-use App\Models\Stakeholder;
-use App\Models\ProblemAnalysis;
-use App\Models\Strategy;
-use App\Models\Goal;
-use App\Models\Objective;
+use App\Models\LogicalFramework;
+use App\Models\SpecificObjective;
 use App\Models\Result;
 use App\Models\Activity;
 use App\Models\Risk;
+use App\Models\Budget;
+use App\Models\DynamicProjectField;
 
 class ProjectShowLivewire extends Component
 {
     public $projectId;
     public $project;
-
-    // Assurez-vous d'utiliser le bon namespace pour vos modèles si différent (ex: App\Models\Project)
-    // Et assurez-vous que toutes les relations sont correctement définies dans vos modèles.
+    public $dynamicFormFields = []; // Pour stocker les définitions des champs dynamiques
 
     /**
      * Monte le composant avec l'ID du projet.
@@ -37,20 +32,29 @@ class ProjectShowLivewire extends Component
 
     /**
      * Charge le projet et toutes ses relations.
+     *
+     * J'ai mis à jour les relations pour qu'elles correspondent à votre modèle
+     * et à votre formulaire de création/édition.
      */
     public function loadProject()
     {
-        // Charge le projet avec toutes ses relations pour minimiser les requêtes N+1
         $this->project = Project::with([
-            'context',
+            'projectType.dynamicFields', // Charge le type de projet et ses champs dynamiques
+            'projectContext',
             'documents',
-            'environmentAnalyses',
-            'stakeholders',
-            'problemAnalyses',
-            'strategies',
-            'goals.objectives.results.activities', // Charge la hiérarchie But -> Objectifs -> Résultats -> Activités
-            'risks'
+            'budgets',
+            'logicalFramework.specificObjectives.results.activities', // La hiérarchie correcte
+            'creator',
         ])->findOrFail($this->projectId);
+
+        // Charge les définitions des champs dynamiques pour l'affichage
+        if ($this->project->projectType) {
+             $this->dynamicFormFields = $this->project->projectType->dynamicFields()
+                ->orderBy('order')
+                ->get()
+                ->groupBy('section')
+                ->toArray();
+        }
     }
 
     /**
@@ -60,10 +64,4 @@ class ProjectShowLivewire extends Component
     {
         return view('livewire.v-beta.project.project-show-livewire');
     }
-
-    // Exemple de méthode si vous souhaitez des opérations futures (édition, etc.)
-    // public function toggleEditMode()
-    // {
-    //     // Logique pour basculer en mode édition
-    // }
 }

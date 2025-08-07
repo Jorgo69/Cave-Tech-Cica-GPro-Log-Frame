@@ -22,7 +22,12 @@ Route::get('dashboard', [App\Http\Controllers\VBeta\DashboardController::class, 
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+// Project
 Route::view('/project-list', 'v_beta.project-list')->name('project.list');
+// Route::view('/project-create', 'v_beta.project-design')->name('project.create');
+// Route::view('/project-edit/{projectId}', 'v_beta.project-design-edit')->name('project.edit');
+
+// End Project
 
 // Admin - IT
 
@@ -36,6 +41,9 @@ Route::view('/admin-it/project-types/{projectTypeId}/edit', 'v_beta.admin.type_o
 
 // End Admin - IT
 
+
+
+
 // Proposition de projet Start
 
 // Route pour afficher le formulaire de création
@@ -43,6 +51,9 @@ Route::view('/creator-proposal/proposal-project/create', 'v_beta.proposal-projec
 
 // Route pour afficher le formulaire d'édition
 Route::view('/creator-proposal/proposal-project/{projectId}/edit', 'v_beta.proposal-project.form')->name('creator.proposal.project.edit');
+
+// Route pour afficher les details
+Route::get('/projects/{projectId}', [App\Http\Controllers\VBeta\ProjectShowController::class, 'index'])->name('project.show');
 
 // Proposition de projet End
 

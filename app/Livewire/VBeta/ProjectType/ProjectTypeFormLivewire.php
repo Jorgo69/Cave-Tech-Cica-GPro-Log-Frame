@@ -2,11 +2,12 @@
 
 namespace App\Livewire\VBeta\ProjectType;
 
+use App\Models\Project;
 use Livewire\Component;
 
 use App\Models\ProjectType;
-use App\Models\DynamicProjectField;
 use Illuminate\Support\Str;
+use App\Models\DynamicProjectField;
 
 
 class ProjectTypeFormLivewire extends Component
@@ -31,7 +32,7 @@ class ProjectTypeFormLivewire extends Component
         if ($projectTypeId) {
             // dd('fffff');
             $this->projectTypeId = $projectTypeId;
-            $projectType = ProjectType::with('dynamicFields')->findOrFail($projectTypeId);
+            $projectType = Project::with('dynamicFields')->findOrFail($projectTypeId);
             $this->name = $projectType->name;
             $this->description = $projectType->description;
             $this->category = $projectType->category;

@@ -38,97 +38,81 @@
                                     @endif
                                 </div>
                             </div>
+                            @if($project->projectType)
+                                <div class="mt-4">
+                                    <p><strong class="font-medium dark:text-gray-100">Type de Projet :</strong> {{ $project->projectType->name }}</p>
+                                </div>
+                            @endif
                             @if($project->description)
-                                <div class="mt-4 ">
+                                <div class="mt-4">
                                     <strong class="font-medium dark:text-gray-100">Description Générale :</strong>
                                     <p class="mt-1 p-3 bg-gray-50 dark:bg-gray-900 rounded-md text-sm dark:text-gray-400">{{ $project->description }}</p>
                                 </div>
                             @endif
                         </div>
 
-                        {{-- Section 2: Contexte pour l'IA --}}
-                        @if($project->context)
+                        {{-- Section 2: Contexte du projet --}}
+                        @if($project->projectContext)
                             <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow">
                                 <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                                    <i class="fas fa-brain mr-3 text-blue-600"></i> Contexte IA
+                                    <i class="fas fa-file-alt mr-3 text-blue-600"></i> Contexte du Projet
                                 </h2>
                                 <p class="text-gray-700 dark:text-gray-300">
-                                    <strong class="font-medium">Description de Base pour l'IA :</strong>
-                                    <p class="mt-1 p-3 bg-gray-50 dark:bg-gray-900 rounded-md text-sm dark:text-gray-300">{{ $project->context->base_description }}</p>
+                                    <strong class="font-medium">Description :</strong>
+                                    <p class="mt-1 p-3 bg-gray-50 dark:bg-gray-900 rounded-md text-sm dark:text-gray-300">{{ $project->projectContext->context_description }}</p>
                                 </p>
                             </div>
                         @endif
 
-                        {{-- Section 3: Analyse de l'Environnement --}}
-                        @if($project->environmentAnalysis)
-                            <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow">
-                                <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                                    <i class="fas fa-globe mr-3 text-blue-600"></i> Analyse de l'Environnement (PESTEL/SWOT)
-                                </h2>
-                                <p class="text-gray-700 dark:text-gray-300">
-                                    <p class="mt-1 p-3 bg-gray-50 dark:bg-gray-900 rounded-md text-sm">{{ $project->environmentAnalysis->analysis_text }}</p>
-                                </p>
-                            </div>
-                        @endif
-
-                        {{-- Section 4: Parties Prenantes --}}
-                        @if($project->stakeholders->isNotEmpty())
-                            <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow dark:text-gray-300">
-                                <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                                    <i class="fas fa-users mr-3 text-blue-600"></i> Parties Prenantes
-                                </h2>
-                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    @foreach($project->stakeholders as $stakeholder)
-                                        <div class="bg-white dark:bg-gray-900 p-4 rounded-md shadow-sm border border-gray-200 dark:border-gray-700">
-                                            <p><strong class="font-medium">Nom :</strong> {{ $stakeholder->name }}</p>
-                                            <p><strong class="font-medium">Rôle :</strong> {{ $stakeholder->role }}</p>
-                                        </div>
-                                    @endforeach
+                        {{-- Section 3: Champs Dynamiques (traitement des délimiteurs) --}}
+                        @if($dynamicFormFields)
+                            @foreach($dynamicFormFields as $section => $fields)
+                                <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow">
+                                    <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                                        <i class="fas fa-cogs mr-3 text-blue-600"></i> {{ ucfirst($section) }}
+                                    </h2>
+                                    <div class="space-y-4 text-gray-700 dark:text-gray-300">
+                                        @foreach($fields as $fieldDef)
+                                            @php
+                                                $targetField = $fieldDef['target_project_field'];
+                                                $value = null;
+                                                // Logique pour extraire la valeur délimitée
+                                                if (isset($project->$targetField)) {
+                                                    $pattern = '/' . preg_quote($fieldDef['delimiter_start'], '/') . '(.*?)' . preg_quote($fieldDef['delimiter_end'], '/') . '/s';
+                                                    if (preg_match($pattern, $project->$targetField, $matches)) {
+                                                        $value = $matches[1];
+                                                    }
+                                                }
+                                            @endphp
+                                            @if($value)
+                                                <div>
+                                                    <strong class="font-medium">{{ $fieldDef['question_text'] }} :</strong>
+                                                    <p class="mt-1 p-3 bg-gray-50 dark:bg-gray-900 rounded-md text-sm dark:text-gray-400">{{ $value }}</p>
+                                                </div>
+                                            @endif
+                                        @endforeach
+                                    </div>
                                 </div>
-                            </div>
+                            @endforeach
                         @endif
 
-                        {{-- Section 5: Problématique Cible --}}
-                        @if($project->problemAnalysis)
+                        {{-- Section 4: Cadre Logique --}}
+                        @if($project->logicalFramework)
                             <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow">
                                 <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                                    <i class="fas fa-exclamation-triangle mr-3 text-blue-600"></i> Problématique Cible
-                                </h2>
-                                <p class="text-gray-700 dark:text-gray-300">
-                                    <p class="mt-1 p-3 bg-gray-50 dark:bg-gray-900 rounded-md text-sm">{{ $project->problemAnalysis->problem_description }}</p>
-                                </p>
-                            </div>
-                        @endif
-
-                        {{-- Section 6: Stratégie --}}
-                        @if($project->strategy)
-                            <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow">
-                                <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                                    <i class="fas fa-lightbulb mr-3 text-blue-600"></i> Stratégie & Approche
-                                </h2>
-                                <p class="text-gray-700 dark:text-gray-300">
-                                    <p class="mt-1 p-3 bg-gray-50 dark:bg-gray-900 rounded-md text-sm">{{ $project->strategy->strategy_description }}</p>
-                                </p>
-                            </div>
-                        @endif
-
-                        {{-- Section 7: But Général, Objectifs Spécifiques, Résultats et Activités --}}
-                        @if($project->goal)
-                            <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow">
-                                <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                                    <i class="fas fa-bullseye mr-3 text-blue-600"></i> Buts, Objectifs, Résultats & Activités
+                                    <i class="fas fa-bullseye mr-3 text-blue-600"></i> Cadre Logique
                                 </h2>
 
                                 <div class="mb-6">
                                     <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">But Général</h3>
-                                    <p class="mt-1 p-3 bg-gray-50 dark:bg-gray-900 rounded-md text-sm text-gray-700 dark:text-gray-300">{{ $project->goal->description }}</p>
+                                    <p class="mt-1 p-3 bg-gray-50 dark:bg-gray-900 rounded-md text-sm text-gray-700 dark:text-gray-300">{{ $project->logicalFramework->general_objective }}</p>
                                 </div>
 
-                                @if($project->goal->objectives->isNotEmpty())
+                                @if($project->logicalFramework->specificObjectives->isNotEmpty())
                                     <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-3">Objectifs Spécifiques</h3>
                                     <div class="space-y-4">
-                                        @foreach($project->goal->objectives as $objective)
-                                            <div class="bg-white  dark:bg-gray-900 p-4 rounded-md shadow-sm border border-gray-200 dark:border-gray-700">
+                                        @foreach($project->logicalFramework->specificObjectives as $objective)
+                                            <div class="bg-white dark:bg-gray-900 p-4 rounded-md shadow-sm border border-gray-200 dark:border-gray-700">
                                                 <p><strong class="font-medium">Description :</strong> {{ $objective->description }}</p>
 
                                                 @if($objective->results->isNotEmpty())
@@ -157,25 +141,44 @@
                             </div>
                         @endif
 
-                        {{-- Section 8: Gestion des Incertitudes (Risques) --}}
-                        @if($project->risks->isNotEmpty())
+                        {{-- Section 5: Budgets Associés --}}
+                        @if($project->budgets->isNotEmpty())
                             <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow">
                                 <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                                    <i class="fas fa-shield-alt mr-3 text-blue-600"></i> Gestion des Incertitudes (Risques)
+                                    <i class="fas fa-wallet mr-3 text-blue-600"></i> Budgets Prévisionnels
                                 </h2>
-                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 dark:text-gray-300">
-                                    @foreach($project->risks as $risk)
-                                        <div class="bg-white dark:bg-gray-900 p-4 rounded-md shadow-sm border border-gray-200 dark:border-gray-700">
-                                            <p><strong class="font-medium">Description :</strong> {{ $risk->description }}</p>
-                                            <p><strong class="font-medium">Impact :</strong> {{ $risk->impact }}</p>
-                                            <p><strong class="font-medium">Probabilité :</strong> {{ $risk->probability }}</p>
-                                        </div>
-                                    @endforeach
+                                <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                                    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                                            <tr>
+                                                <th scope="col" class="px-6 py-3">Description</th>
+                                                <th scope="col" class="px-6 py-3">Quantité</th>
+                                                <th scope="col" class="px-6 py-3">Coût Unitaire</th>
+                                                <th scope="col" class="px-6 py-3">Coût Total</th>
+                                                <th scope="col" class="px-6 py-3">Catégorie</th>
+                                                <th scope="col" class="px-6 py-3">Responsable</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($project->budgets as $budget)
+                                                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                                    <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                                        {{ $budget->description }}
+                                                    </td>
+                                                    <td class="px-6 py-4">{{ $budget->quantity }}</td>
+                                                    <td class="px-6 py-4">{{ number_format($budget->unit_cost, 2, ',', ' ') }} F</td>
+                                                    <td class="px-6 py-4">{{ number_format($budget->total_cost, 2, ',', ' ') }} F</td>
+                                                    <td class="px-6 py-4">{{ $budget->category }}</td>
+                                                    <td class="px-6 py-4">{{ $budget->responsibleUser->name ?? 'N/A' }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         @endif
 
-                        {{-- Section 9: Documents Associés --}}
+                        {{-- Section 6: Documents Associés --}}
                         @if($project->documents->isNotEmpty())
                             <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow">
                                 <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
@@ -190,15 +193,15 @@
                                         </li>
                                     @endforeach
                                 </ul>
-                                <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                                    Veuillez noter que pour accéder aux documents, le stockage symbolique (`php artisan storage:link`) doit être configuré.
-                                </p>
                             </div>
                         @endif
 
                         <div class="mt-8 flex justify-end">
+                            <a href="{{ route('creator.proposal.project.edit', ['projectId' => $project->id ]) }}" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-semibold">
+                                Modifier
+                            </a>
                             <a href="{{ route('project.list') }}" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-semibold">
-                                Retour à la liste des projets
+                                Retour a la liste
                             </a>
                         </div>
                     </div>

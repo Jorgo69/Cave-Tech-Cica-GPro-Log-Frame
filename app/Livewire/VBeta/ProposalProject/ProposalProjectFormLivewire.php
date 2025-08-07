@@ -60,6 +60,8 @@ class ProposalProjectFormLivewire extends Component
     public $activities = []; // Tableau d'activités
     public $budgets = []; // Tableau de lignes budgétaires
 
+    
+
     // Liste des utilisateurs pour les responsables (dropdowns)
     public $users = [];
 
@@ -201,7 +203,7 @@ class ProposalProjectFormLivewire extends Component
                 'projectContext',
                 'projectDocuments',
                 'logicalFramework.specificObjectives.results',
-                'activities', // Assurez-vous que cette relation est correctement définie dans le modèle Project
+            'logicalFramework.specificObjectives.results.activities', // Charger les activités via les résultats
                 'budgets',
                 'projectType'
             ])->find($projectId); // Utiliser find() au lieu de findOrFail() pour éviter l'exception
@@ -264,7 +266,15 @@ class ProposalProjectFormLivewire extends Component
             }
 
             // Assurez-vous que les activités et budgets sont des tableaux, même s'ils sont vides
-            $this->activities = $project->activities->toArray();
+            // Charger les activités en itérant sur les résultats
+            $this->activities = [];
+            foreach ($project->logicalFramework->specificObjectives as $obj) {
+                foreach ($obj->results as $res) {
+                    foreach ($res->activities as $act) {
+                        $this->activities[] = $act->toArray();
+                    }
+                }
+            }
             $this->budgets = $project->budgets->toArray();
 
         } else {
@@ -757,13 +767,23 @@ class ProposalProjectFormLivewire extends Component
             Log::debug("LogicalFramework créé avec l'ID: {$logicalFramework->id}");
 
             // Gérer les objectifs spécifiques (liés au LogicalFramework)
+            // foreach ($this->specificObjectives as $objData) {
+            //     $specificObjective = SpecificObjective::create(array_merge(
+            //         ['id' => (string) Str::uuid(), 'logical_framework_id' => $logicalFramework->id],
+            //         $objData
+            //     ));
+            //     Log::debug("Objectif spécifique créé avec l'ID: {$specificObjective->id}");
+            // }
+
             foreach ($this->specificObjectives as $objData) {
+                unset($objData['logical_framework_id']); // Supprime l'ancien ID s'il existe
                 $specificObjective = SpecificObjective::create(array_merge(
                     ['id' => (string) Str::uuid(), 'logical_framework_id' => $logicalFramework->id],
                     $objData
                 ));
                 Log::debug("Objectif spécifique créé avec l'ID: {$specificObjective->id}");
             }
+
 
             // Gérer les résultats (liés aux objectifs spécifiques)
             // Nous devons nous assurer que les objectifs spécifiques existent avant de lier les résultats.
@@ -781,24 +801,64 @@ class ProposalProjectFormLivewire extends Component
             }
 
             $objectiveIndex = 0;
+            // foreach ($this->expectedResults as $resData) {
+            //     $specificObjective = $allSpecificObjectives->get($objectiveIndex % $allSpecificObjectives->count());
+            //     Result::create(array_merge(
+            //         ['id' => (string) Str::uuid(), 'specific_objective_id' => $specificObjective->id],
+            //         $resData
+            //     ));
+            //     Log::debug("Résultat créé pour l'objectif: {$specificObjective->id}");
+            //     $objectiveIndex++;
+            // }
+
             foreach ($this->expectedResults as $resData) {
+                unset($resData['specific_objective_id']);
+                unset($resData['id']);
                 $specificObjective = $allSpecificObjectives->get($objectiveIndex % $allSpecificObjectives->count());
                 Result::create(array_merge(
                     ['id' => (string) Str::uuid(), 'specific_objective_id' => $specificObjective->id],
                     $resData
                 ));
-                Log::debug("Résultat créé pour l'objectif: {$specificObjective->id}");
                 $objectiveIndex++;
             }
 
+
             // Gérer les activités (liées aux résultats)
+            // foreach ($this->activities as $activityData) {
+            //     // Tenter de lier l'activité au premier résultat disponible du projet
+            //     // Il est crucial que $project->logicalFramework et ses dépendances existent ici
+            //     $firstResult = $logicalFramework->specificObjectives?->first()?->results?->first();
+            //     $resultId = $firstResult?->id;
+                
+            //     // Fallback si aucun résultat n'existe encore, créer un résultat générique
+            //     if (!$resultId) {
+            //         $specificObjectiveForActivity = $logicalFramework->specificObjectives?->first() ?? SpecificObjective::create([
+            //             'id' => (string) Str::uuid(),
+            //             'logical_framework_id' => $logicalFramework->id,
+            //             'description' => 'Objectif générique pour activités (Fallback)',
+            //         ]);
+            //         $resultForActivity = Result::create([
+            //             'id' => (string) Str::uuid(),
+            //             'specific_objective_id' => $specificObjectiveForActivity->id,
+            //             'description' => 'Résultat générique pour activité initiale (Fallback)',
+            //         ]);
+            //         $resultId = $resultForActivity->id;
+            //         Log::debug("Résultat générique créé pour lier l'activité (Fallback): {$resultId}");
+            //     }
+
+            //     Activity::create(array_merge(
+            //         ['id' => (string) Str::uuid(), 'result_id' => $resultId],
+            //         $activityData
+            //     ));
+            //     Log::debug("Activité créée pour le résultat: {$resultId}");
+            // }
+
             foreach ($this->activities as $activityData) {
-                // Tenter de lier l'activité au premier résultat disponible du projet
-                // Il est crucial que $project->logicalFramework et ses dépendances existent ici
+                unset($activityData['result_id']);
+                unset($activityData['id']);
                 $firstResult = $logicalFramework->specificObjectives?->first()?->results?->first();
                 $resultId = $firstResult?->id;
-                
-                // Fallback si aucun résultat n'existe encore, créer un résultat générique
+
                 if (!$resultId) {
                     $specificObjectiveForActivity = $logicalFramework->specificObjectives?->first() ?? SpecificObjective::create([
                         'id' => (string) Str::uuid(),
@@ -811,23 +871,30 @@ class ProposalProjectFormLivewire extends Component
                         'description' => 'Résultat générique pour activité initiale (Fallback)',
                     ]);
                     $resultId = $resultForActivity->id;
-                    Log::debug("Résultat générique créé pour lier l'activité (Fallback): {$resultId}");
                 }
 
                 Activity::create(array_merge(
                     ['id' => (string) Str::uuid(), 'result_id' => $resultId],
                     $activityData
                 ));
-                Log::debug("Activité créée pour le résultat: {$resultId}");
             }
 
+
             // Gérer les Budgets (création)
+            // foreach ($this->budgets as $budgetData) {
+            //     Budget::create(array_merge(
+            //         ['id' => (string) Str::uuid(), 'project_id' => $project->id],
+            //         $budgetData
+            //     ));
+            // }
             foreach ($this->budgets as $budgetData) {
+                unset($budgetData['id']);
                 Budget::create(array_merge(
                     ['id' => (string) Str::uuid(), 'project_id' => $project->id],
                     $budgetData
                 ));
             }
+
             Log::debug("Budgets du projet créés.");
 
             DB::commit();
