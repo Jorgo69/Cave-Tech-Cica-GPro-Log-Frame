@@ -11,7 +11,7 @@
                 <select wire:model.live="statusFilter" class="form-select rounded-md shadow-sm mt-1 block w-full md:w-1/4 dark:bg-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                     <option value="">Tous les statuts</option>
                     @foreach ($projectStatuses as $status)
-                        <option value="{{ $status }}">{{ Str::ucfirst(str_replace('_', ' ', $status)) }}</option>
+                        <option value="{{ $status }}">{{ Str::ucfirst(str_replace('_', ' ', $status == 'draft' ? 'Brouillons' : $status )) }}</option>
                     @endforeach
                 </select>
 
@@ -89,11 +89,16 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                            @if($project->status === 'in_progress') bg-yellow-100 text-yellow-800
-                                            @elseif($project->status === 'completed') bg-green-100 text-green-800
-                                            @elseif($project->status === 'planned') bg-purple-100 text-purple-800
-                                            @else bg-gray-100 text-gray-800 @endif">
-                                            {{ Str::ucfirst(str_replace('_', ' ', $project->status)) }}
+                                        {{ 
+                                            $project->status === 'Actif' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200' :
+                                            ($project->status === 'draft' ? 'bg-amber-300 text-amber-800 dark:bg-amber-900 dark:text-amber-200' :
+                                            ($project->status === 'Terminé' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                                            ($project->status === 'En attente' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                                            'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                            )))
+                                        }}
+                                        ">
+                                            {{ Str::ucfirst(str_replace('_', ' ', $project->status == 'draft' ? 'Brouillon' : $project->status )) }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">

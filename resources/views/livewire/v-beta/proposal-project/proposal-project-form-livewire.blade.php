@@ -183,7 +183,7 @@
                             </div>
 
                             {{-- Champs dynamiques pour cette section --}}
-                            @if (isset($dynamicFormFields['contexte_documents']))
+                            {{-- @if (isset($dynamicFormFields['contexte_documents']))
                                 <div class="mt-6 border-t pt-4 border-gray-200 dark:border-gray-700">
                                     <h3 class="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">Informations Complémentaires</h3>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -212,7 +212,7 @@
                                         @endforeach
                                     </div>
                                 </div>
-                            @endif
+                            @endif --}}
                         </div>
 
                         {{-- Fenêtre 3 : Cadre Logique (But & Objectifs Spécifiques) --}}

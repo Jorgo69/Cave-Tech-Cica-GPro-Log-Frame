@@ -1,0 +1,37 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('project_contexts', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->uuid('project_id');
+            $table->longText('context_description')->nullable();
+            $table->longText('ai_analysis_result')->nullable();
+
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->index('project_id');
+
+            
+            $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('project_contexts');
+    }
+};
